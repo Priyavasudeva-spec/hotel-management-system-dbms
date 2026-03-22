@@ -20,7 +20,7 @@ A static Hotel Management System developed to demonstrate and apply core DBMS co
 *  Query Simulation using JavaScript
 
 
-##Tech Stack used:
+##  Tech Stack used
 
 
 HTML5           
