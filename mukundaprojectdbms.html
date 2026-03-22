@@ -1,0 +1,859 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hotel Management System</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+        * { font-family: 'Poppins', sans-serif; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        
+        /* Sidebar scrollbar */
+        .sidebar-scroll::-webkit-scrollbar { width: 6px; }
+        .sidebar-scroll::-webkit-scrollbar-track { background: #0f172a; }
+        .sidebar-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        
+        /* Button hover animation */
+        .query-btn {
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .query-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s ease;
+        }
+        .query-btn:hover::before {
+            left: 100%;
+        }
+        .query-btn:hover {
+            transform: translateX(4px);
+            background: blue
+        }
+        .query-btn.active {
+            background: #50572a;
+            border-left: 3px solid #60a5fa;
+        }
+        
+        /* Table animations */
+        .table-row {
+            animation: fadeIn 0.3s ease forwards;
+            opacity: 0;
+        }
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+        
+        /* Loading spinner */
+        .spinner {
+            border: 3px solid #334155;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Gradient text */
+        .gradient-text {
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+       
+    </style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-slate-900 text-white">
+  <div class="h-full flex flex-col overflow-hidden"><!-- Header -->
+   <header class="bg-slate-800 border-b border-slate-700 px-6 py-4 flex items-center justify-between shrink-0">
+    <div class="flex items-center gap-4">
+     <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+      <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+      </svg>
+     </div>
+     <div>
+      <h1 id="system-title" class="text-2xl font-bold gradient-text" >NOVOTEL</h1>
+      <p id="hotel-name" class="text-slate-400 text-sm">Grand Palace Hotel</p>
+     </div>
+    </div>
+    <div class="flex items-center gap-4">
+     <div class="text-right">
+      <p class="text-sm text-slate-400">Total Queries</p>
+      <p class="text-xl font-bold text-blue-400">100</p>
+     </div>
+     <div class="w-10 h-10 bg-slate-700 rounded-full flex items-center justify-center">
+      <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+      </svg>
+     </div>
+    </div>
+   </header><!-- Main Content -->
+   <div class="flex flex-1 overflow-hidden"><!-- Sidebar -->
+    <aside class="w-64 bg-slate-800 border-r border-slate-700 flex flex-col shrink-0">
+     <div class="p-4 border-b border-slate-700">
+      <div class="relative"><input type="text" id="search-input" placeholder="Search queries..." class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 pl-10 text-sm focus:outline-none focus:border-blue-500 transition-colors">
+       <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+       </svg>
+      </div>
+     </div>
+     <div class="p-3 border-b border-slate-700"><select id="category-filter" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"> <option value="all">All Categories</option> <option value="customers">Customers</option> <option value="rooms">Rooms</option> <option value="bookings">Bookings</option> <option value="staff">Staff</option> <option value="payments">Payments</option> <option value="analytics">Analytics</option> </select>
+     </div>
+     <nav id="sidebar-nav" class="flex-1 overflow-y-auto sidebar-scroll p-3 space-y-1"><!-- Query buttons will be generated here -->
+     </nav>
+    </aside><!-- Main Area -->
+    <main class="flex-1 flex flex-col overflow-hidden"><!-- Query Info Bar -->
+     <div class="bg-slate-800 border-b border-slate-700 px-6 py-3 flex items-center justify-between shrink-0">
+      <div>
+       <h2 id="query-title" class="text-lg font-semibold text-white">Select a Query</h2>
+       <p id="query-description" class="text-sm text-slate-400">Choose a query from the sidebar to view results</p>
+      </div>
+      <div id="query-meta" class="flex items-center gap-4 text-sm"><span id="row-count" class="text-slate-400 hidden"> <span class="text-blue-400 font-semibold" id="count-value">0</span> rows </span> <span id="query-time" class="text-slate-400 hidden"> <span class="text-green-400 font-semibold" id="time-value">0</span>ms </span>
+      </div>
+     </div><!-- SQL Query Display -->
+     <div id="sql-display" class="bg-slate-850 border-b border-slate-700 px-6 py-3 hidden shrink-0">
+      <div class="flex items-center justify-between mb-2"><span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">SQL Query</span> <button id="copy-sql" class="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1">
+        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+        </svg> Copy </button>
+      </div><code id="sql-code" class="block bg-slate-900 rounded-lg p-3 text-sm text-emerald-400 font-mono overflow-x-auto"></code>
+     </div><!-- Results Area -->
+     <div id="results-container" class="flex-1 overflow-auto p-6"><!-- Welcome State -->
+      <div id="welcome-state" class="h-full flex items-center justify-center">
+       <div class="text-center">
+        <div class="w-24 h-24 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-6">
+         <svg class="w-12 h-12 text-slate-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+         </svg>
+        </div>
+        <h3 class="text-xl font-semibold text-slate-400 mb-2">No Query Selected</h3>
+        <p class="text-slate-500 max-w-md">Select one of the 100 queries from the sidebar to view database results. Each query demonstrates different SQL operations.</p>
+       </div>
+      </div><!-- Loading State -->
+      <div id="loading-state" class="h-full flex items-center justify-center hidden">
+       <div class="text-center">
+        <div class="spinner mx-auto mb-4"></div>
+        <p class="text-slate-400">Executing query...</p>
+       </div>
+      </div><!-- No Data State -->
+      <div id="no-data-state" class="h-full flex items-center justify-center hidden">
+       <div class="text-center">
+        <div class="w-24 h-24 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-6">
+         <svg class="w-12 h-12 text-yellow-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+         </svg>
+        </div>
+        <h3 class="text-xl font-semibold text-slate-400 mb-2">No Data Found</h3>
+        <p class="text-slate-500">The query returned no results.</p>
+       </div>
+      </div><!-- Results Table -->
+      <div id="results-table-container" class="hidden">
+       <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+        <div class="overflow-x-auto">
+         <table class="w-full">
+          <thead id="table-head" class="bg-slate-700"><!-- Headers will be generated here -->
+          </thead>
+          <tbody id="table-body" class="divide-y divide-slate-700"><!-- Rows will be generated here -->
+          </tbody>
+         </table>
+        </div>
+       </div>
+      </div>
+     </div>
+    </main>
+   </div>
+  </div>
+  <script>
+        
+        // Configuration
+        const defaultConfig = {
+            system_title: 'Hotel Management System',
+            hotel_name: 'Grand Palace Hotel',
+            primary_color: '#1e40af',
+            secondary_color: '#1e293b',
+            accent_color: '#3b82f6',
+            text_color: '#f1f5f9',
+            surface_color: '#334155'
+        };
+
+        let config = { ...defaultConfig };
+
+        // ============================================
+        // QUERY DEFINITIONS (100 Queries)
+        // ============================================
+        // Each query has:
+        // - id: Query number
+        // - title: Display name
+        // - category: For filtering
+        // - sql: The actual SQL query
+        // - description: What the query does
+        // - apiEndpoint: The API route (GET /query/{id})
+        // ============================================
+
+        const queries = [
+            // CUSTOMER QUERIES (1-20)
+            { id: 1, title: "All Customers", category: "customers", sql: "SELECT * FROM customers ORDER BY customer_id", description: "Retrieve all customers from the database" },
+            { id: 2, title: "Active Customers", category: "customers", sql: "SELECT * FROM customers WHERE status = 'active'", description: "Get all customers with active status" },
+            { id: 3, title: "VIP Customers", category: "customers", sql: "SELECT * FROM customers WHERE membership_level = 'VIP' ORDER BY total_spent DESC", description: "List all VIP membership customers" },
+            { id: 4, title: "Customers by City", category: "customers", sql: "SELECT city, COUNT(*) as count FROM customers GROUP BY city ORDER BY count DESC", description: "Count customers grouped by city" },
+            { id: 5, title: "Top 10 Spenders", category: "customers", sql: "SELECT * FROM customers ORDER BY total_spent DESC LIMIT 10", description: "Top 10 customers by total spending" },
+            { id: 6, title: "New Customers (30 days)", category: "customers", sql: "SELECT * FROM customers WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)", description: "Customers registered in last 30 days" },
+            { id: 7, title: "Customers with Email", category: "customers", sql: "SELECT customer_id, name, email FROM customers WHERE email IS NOT NULL", description: "Customers with valid email addresses" },
+            { id: 8, title: "Customer Count by Country", category: "customers", sql: "SELECT country, COUNT(*) as total FROM customers GROUP BY country", description: "Distribution of customers by country" },
+            { id: 9, title: "Repeat Customers", category: "customers", sql: "SELECT c.* FROM customers c WHERE (SELECT COUNT(*) FROM bookings b WHERE b.customer_id = c.customer_id) > 1", description: "Customers with multiple bookings" },
+            { id: 10, title: "Customers Birthday This Month", category: "customers", sql: "SELECT * FROM customers WHERE MONTH(date_of_birth) = MONTH(CURRENT_DATE())", description: "Customers with birthday this month" },
+            { id: 11, title: "Inactive Customers", category: "customers", sql: "SELECT * FROM customers WHERE last_visit < DATE_SUB(NOW(), INTERVAL 6 MONTH)", description: "Customers inactive for 6+ months" },
+            { id: 12, title: "Customer Phone List", category: "customers", sql: "SELECT name, phone FROM customers WHERE phone IS NOT NULL ORDER BY name", description: "Phone directory of all customers" },
+            { id: 13, title: "Customers by Age Group", category: "customers", sql: "SELECT CASE WHEN age < 25 THEN '18-24' WHEN age < 35 THEN '25-34' WHEN age < 50 THEN '35-49' ELSE '50+' END as age_group, COUNT(*) as count FROM customers GROUP BY age_group", description: "Customer demographics by age" },
+            { id: 14, title: "Corporate Customers", category: "customers", sql: "SELECT * FROM customers WHERE customer_type = 'corporate'", description: "List all corporate accounts" },
+            { id: 15, title: "Customers Without Bookings", category: "customers", sql: "SELECT c.* FROM customers c LEFT JOIN bookings b ON c.customer_id = b.customer_id WHERE b.booking_id IS NULL", description: "Registered customers with no bookings" },
+            { id: 16, title: "Customer Loyalty Points", category: "customers", sql: "SELECT name, loyalty_points FROM customers ORDER BY loyalty_points DESC", description: "Customers ranked by loyalty points" },
+            { id: 17, title: "Customers by Registration Date", category: "customers", sql: "SELECT DATE(created_at) as date, COUNT(*) as registrations FROM customers GROUP BY date ORDER BY date DESC LIMIT 30", description: "Daily registration trends" },
+            { id: 18, title: "High Value Customers", category: "customers", sql: "SELECT * FROM customers WHERE total_spent > 10000", description: "Customers who spent over $10,000" },
+            { id: 19, title: "Customers with Special Requests", category: "customers", sql: "SELECT * FROM customers WHERE special_requests IS NOT NULL", description: "Customers with noted preferences" },
+            { id: 20, title: "Customer Full Details", category: "customers", sql: "SELECT c.*, COUNT(b.booking_id) as total_bookings, SUM(p.amount) as total_paid FROM customers c LEFT JOIN bookings b ON c.customer_id = b.customer_id LEFT JOIN payments p ON b.booking_id = p.booking_id GROUP BY c.customer_id", description: "Complete customer profile with stats" },
+
+            // ROOM QUERIES (21-40)
+            { id: 21, title: "All Rooms", category: "rooms", sql: "SELECT * FROM rooms ORDER BY room_number", description: "Complete list of all hotel rooms" },
+            { id: 22, title: "Available Rooms", category: "rooms", sql: "SELECT * FROM rooms WHERE status = 'available'", description: "Rooms currently available for booking" },
+            { id: 23, title: "Occupied Rooms", category: "rooms", sql: "SELECT * FROM rooms WHERE status = 'occupied'", description: "Rooms currently occupied by guests" },
+            { id: 24, title: "Rooms Under Maintenance", category: "rooms", sql: "SELECT * FROM rooms WHERE status = 'maintenance'", description: "Rooms out of service for maintenance" },
+            { id: 25, title: "Rooms by Type", category: "rooms", sql: "SELECT room_type, COUNT(*) as count, AVG(price_per_night) as avg_price FROM rooms GROUP BY room_type", description: "Room inventory by type" },
+            { id: 26, title: "Deluxe Rooms", category: "rooms", sql: "SELECT * FROM rooms WHERE room_type = 'deluxe'", description: "All deluxe category rooms" },
+            { id: 27, title: "Suite Rooms", category: "rooms", sql: "SELECT * FROM rooms WHERE room_type = 'suite'", description: "All suite category rooms" },
+            { id: 28, title: "Rooms by Floor", category: "rooms", sql: "SELECT floor, COUNT(*) as rooms, SUM(CASE WHEN status='available' THEN 1 ELSE 0 END) as available FROM rooms GROUP BY floor", description: "Room distribution by floor" },
+            { id: 29, title: "Most Expensive Rooms", category: "rooms", sql: "SELECT * FROM rooms ORDER BY price_per_night DESC LIMIT 10", description: "Top 10 premium rooms" },
+            { id: 30, title: "Budget Rooms", category: "rooms", sql: "SELECT * FROM rooms WHERE price_per_night < 100 ORDER BY price_per_night", description: "Affordable room options" },
+            { id: 31, title: "Rooms with Sea View", category: "rooms", sql: "SELECT * FROM rooms WHERE amenities LIKE '%sea view%'", description: "Rooms featuring sea view" },
+            { id: 32, title: "Rooms with Balcony", category: "rooms", sql: "SELECT * FROM rooms WHERE amenities LIKE '%balcony%'", description: "Rooms with private balcony" },
+            { id: 33, title: "Smoking Rooms", category: "rooms", sql: "SELECT * FROM rooms WHERE smoking_allowed = 1", description: "Rooms where smoking is permitted" },
+            { id: 34, title: "Non-Smoking Rooms", category: "rooms", sql: "SELECT * FROM rooms WHERE smoking_allowed = 0", description: "Non-smoking rooms only" },
+            { id: 35, title: "Rooms Capacity", category: "rooms", sql: "SELECT room_type, MAX(max_occupancy) as max_guests FROM rooms GROUP BY room_type", description: "Maximum capacity by room type" },
+            { id: 36, title: "Average Room Price", category: "rooms", sql: "SELECT room_type, AVG(price_per_night) as avg_price, MIN(price_per_night) as min_price, MAX(price_per_night) as max_price FROM rooms GROUP BY room_type", description: "Price statistics by room type" },
+            { id: 37, title: "Rooms Needing Cleaning", category: "rooms", sql: "SELECT * FROM rooms WHERE needs_cleaning = 1", description: "Rooms flagged for housekeeping" },
+            { id: 38, title: "Recently Renovated Rooms", category: "rooms", sql: "SELECT * FROM rooms WHERE last_renovation > DATE_SUB(NOW(), INTERVAL 1 YEAR)", description: "Rooms renovated in past year" },
+            { id: 39, title: "Room Amenities List", category: "rooms", sql: "SELECT room_number, room_type, amenities FROM rooms ORDER BY room_type", description: "Detailed amenities by room" },
+            { id: 40, title: "Room Occupancy Rate", category: "rooms", sql: "SELECT room_type, COUNT(*) as total, SUM(CASE WHEN status='occupied' THEN 1 ELSE 0 END) as occupied, ROUND(SUM(CASE WHEN status='occupied' THEN 1 ELSE 0 END)/COUNT(*)*100, 2) as occupancy_rate FROM rooms GROUP BY room_type", description: "Current occupancy by room type" },
+
+            // BOOKING QUERIES (41-60)
+            { id: 41, title: "All Bookings", category: "bookings", sql: "SELECT * FROM bookings ORDER BY booking_date DESC", description: "Complete booking history" },
+            { id: 42, title: "Today's Check-ins", category: "bookings", sql: "SELECT b.*, c.name as customer_name, r.room_number FROM bookings b JOIN customers c ON b.customer_id = c.customer_id JOIN rooms r ON b.room_id = r.room_id WHERE b.check_in_date = CURRENT_DATE()", description: "Guests arriving today" },
+            { id: 43, title: "Today's Check-outs", category: "bookings", sql: "SELECT b.*, c.name as customer_name, r.room_number FROM bookings b JOIN customers c ON b.customer_id = c.customer_id JOIN rooms r ON b.room_id = r.room_id WHERE b.check_out_date = CURRENT_DATE()", description: "Guests departing today" },
+            { id: 44, title: "Upcoming Bookings", category: "bookings", sql: "SELECT * FROM bookings WHERE check_in_date > CURRENT_DATE() ORDER BY check_in_date", description: "Future reservations" },
+            { id: 45, title: "Confirmed Bookings", category: "bookings", sql: "SELECT * FROM bookings WHERE status = 'confirmed'", description: "All confirmed reservations" },
+            { id: 46, title: "Pending Bookings", category: "bookings", sql: "SELECT * FROM bookings WHERE status = 'pending'", description: "Bookings awaiting confirmation" },
+            { id: 47, title: "Cancelled Bookings", category: "bookings", sql: "SELECT * FROM bookings WHERE status = 'cancelled' ORDER BY booking_date DESC", description: "Cancelled reservation history" },
+            { id: 48, title: "This Month's Bookings", category: "bookings", sql: "SELECT * FROM bookings WHERE MONTH(booking_date) = MONTH(CURRENT_DATE()) AND YEAR(booking_date) = YEAR(CURRENT_DATE())", description: "All bookings made this month" },
+            { id: 49, title: "Bookings by Source", category: "bookings", sql: "SELECT booking_source, COUNT(*) as count FROM bookings GROUP BY booking_source ORDER BY count DESC", description: "Booking channel analysis" },
+            { id: 50, title: "Long Stay Bookings", category: "bookings", sql: "SELECT b.*, DATEDIFF(check_out_date, check_in_date) as nights FROM bookings b WHERE DATEDIFF(check_out_date, check_in_date) > 7", description: "Stays longer than 7 nights" },
+            { id: 51, title: "Weekend Bookings", category: "bookings", sql: "SELECT * FROM bookings WHERE DAYOFWEEK(check_in_date) IN (1, 7)", description: "Saturday/Sunday check-ins" },
+            { id: 52, title: "Booking Revenue by Month", category: "bookings", sql: "SELECT DATE_FORMAT(booking_date, '%Y-%m') as month, COUNT(*) as bookings, SUM(total_amount) as revenue FROM bookings GROUP BY month ORDER BY month DESC", description: "Monthly booking trends" },
+            { id: 53, title: "Average Stay Duration", category: "bookings", sql: "SELECT AVG(DATEDIFF(check_out_date, check_in_date)) as avg_nights FROM bookings WHERE status = 'completed'", description: "Average length of stay" },
+            { id: 54, title: "Bookings with Special Requests", category: "bookings", sql: "SELECT * FROM bookings WHERE special_requests IS NOT NULL AND special_requests != ''", description: "Bookings with guest notes" },
+            { id: 55, title: "Most Booked Room Types", category: "bookings", sql: "SELECT r.room_type, COUNT(b.booking_id) as bookings FROM bookings b JOIN rooms r ON b.room_id = r.room_id GROUP BY r.room_type ORDER BY bookings DESC", description: "Popular room categories" },
+            { id: 56, title: "Bookings with Extras", category: "bookings", sql: "SELECT * FROM bookings WHERE breakfast_included = 1 OR airport_pickup = 1", description: "Bookings with add-on services" },
+            { id: 57, title: "Late Check-outs Requested", category: "bookings", sql: "SELECT * FROM bookings WHERE late_checkout = 1", description: "Late departure requests" },
+            { id: 58, title: "Early Check-ins Requested", category: "bookings", sql: "SELECT * FROM bookings WHERE early_checkin = 1", description: "Early arrival requests" },
+            { id: 59, title: "Group Bookings", category: "bookings", sql: "SELECT * FROM bookings WHERE num_guests > 4", description: "Large group reservations" },
+            { id: 60, title: "Booking Completion Rate", category: "bookings", sql: "SELECT status, COUNT(*) as count, ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM bookings), 2) as percentage FROM bookings GROUP BY status", description: "Booking status distribution" },
+
+            // STAFF QUERIES (61-80)
+            { id: 61, title: "All Staff", category: "staff", sql: "SELECT * FROM staff ORDER BY department, name", description: "Complete staff directory" },
+            { id: 62, title: "Staff by Department", category: "staff", sql: "SELECT department, COUNT(*) as employees FROM staff GROUP BY department ORDER BY employees DESC", description: "Headcount by department" },
+            { id: 63, title: "Front Desk Staff", category: "staff", sql: "SELECT * FROM staff WHERE department = 'Front Desk'", description: "Reception team members" },
+            { id: 64, title: "Housekeeping Staff", category: "staff", sql: "SELECT * FROM staff WHERE department = 'Housekeeping'", description: "Housekeeping team" },
+            { id: 65, title: "Kitchen Staff", category: "staff", sql: "SELECT * FROM staff WHERE department = 'Kitchen'", description: "Culinary team members" },
+            { id: 66, title: "Management Staff", category: "staff", sql: "SELECT * FROM staff WHERE position LIKE '%Manager%'", description: "All managers" },
+            { id: 67, title: "Staff Salary Summary", category: "staff", sql: "SELECT department, AVG(salary) as avg_salary, MIN(salary) as min_salary, MAX(salary) as max_salary FROM staff GROUP BY department", description: "Salary statistics by department" },
+            { id: 68, title: "Highest Paid Employees", category: "staff", sql: "SELECT * FROM staff ORDER BY salary DESC LIMIT 10", description: "Top 10 earners" },
+            { id: 69, title: "Staff on Duty Today", category: "staff", sql: "SELECT s.* FROM staff s JOIN schedules sc ON s.staff_id = sc.staff_id WHERE sc.shift_date = CURRENT_DATE()", description: "Today's working staff" },
+            { id: 70, title: "Night Shift Staff", category: "staff", sql: "SELECT * FROM staff WHERE shift = 'night'", description: "Night shift employees" },
+            { id: 71, title: "New Employees (90 days)", category: "staff", sql: "SELECT * FROM staff WHERE hire_date >= DATE_SUB(NOW(), INTERVAL 90 DAY)", description: "Recently hired staff" },
+            { id: 72, title: "Staff with Overtime", category: "staff", sql: "SELECT s.*, sh.overtime_hours FROM staff s JOIN shift_hours sh ON s.staff_id = sh.staff_id WHERE sh.overtime_hours > 0", description: "Staff with overtime this month" },
+            { id: 73, title: "Staff Contact List", category: "staff", sql: "SELECT name, department, phone, email FROM staff ORDER BY name", description: "Staff contact directory" },
+            { id: 74, title: "Staff Performance Ratings", category: "staff", sql: "SELECT * FROM staff ORDER BY performance_rating DESC", description: "Staff ranked by performance" },
+            { id: 75, title: "Staff by Experience", category: "staff", sql: "SELECT *, DATEDIFF(NOW(), hire_date) / 365 as years_employed FROM staff ORDER BY years_employed DESC", description: "Staff tenure analysis" },
+            { id: 76, title: "Staff Training Status", category: "staff", sql: "SELECT s.name, s.department, t.training_name, t.completion_date FROM staff s LEFT JOIN training t ON s.staff_id = t.staff_id", description: "Training completion status" },
+            { id: 77, title: "Staff Leave Balance", category: "staff", sql: "SELECT name, department, annual_leave_remaining, sick_leave_remaining FROM staff", description: "Available leave days" },
+            { id: 78, title: "Security Staff", category: "staff", sql: "SELECT * FROM staff WHERE department = 'Security'", description: "Security team members" },
+            { id: 79, title: "Maintenance Staff", category: "staff", sql: "SELECT * FROM staff WHERE department = 'Maintenance'", description: "Maintenance team" },
+            { id: 80, title: "Staff Birthdays This Month", category: "staff", sql: "SELECT name, department, date_of_birth FROM staff WHERE MONTH(date_of_birth) = MONTH(CURRENT_DATE())", description: "Staff birthdays this month" },
+
+            // PAYMENT QUERIES (81-100)
+            { id: 81, title: "All Payments", category: "payments", sql: "SELECT * FROM payments ORDER BY payment_date DESC", description: "Complete payment history" },
+            { id: 82, title: "Pending Payments", category: "payments", sql: "SELECT p.*, c.name as customer_name FROM payments p JOIN bookings b ON p.booking_id = b.booking_id JOIN customers c ON b.customer_id = c.customer_id WHERE p.status = 'pending'", description: "Outstanding payments" },
+            { id: 83, title: "Completed Payments", category: "payments", sql: "SELECT * FROM payments WHERE status = 'completed'", description: "Successful transactions" },
+            { id: 84, title: "Refunded Payments", category: "payments", sql: "SELECT * FROM payments WHERE status = 'refunded'", description: "Refund history" },
+            { id: 85, title: "Total Revenue", category: "payments", sql: "SELECT SUM(amount) as total_revenue, COUNT(*) as total_transactions FROM payments WHERE status = 'completed'", description: "Overall revenue summary" },
+            { id: 86, title: "Revenue This Month", category: "payments", sql: "SELECT SUM(amount) as monthly_revenue FROM payments WHERE MONTH(payment_date) = MONTH(CURRENT_DATE()) AND status = 'completed'", description: "Current month revenue" },
+            { id: 87, title: "Revenue by Payment Method", category: "payments", sql: "SELECT payment_method, COUNT(*) as transactions, SUM(amount) as total FROM payments GROUP BY payment_method ORDER BY total DESC", description: "Payment method breakdown" },
+            { id: 88, title: "Credit Card Payments", category: "payments", sql: "SELECT * FROM payments WHERE payment_method = 'credit_card'", description: "Credit card transactions" },
+            { id: 89, title: "Cash Payments", category: "payments", sql: "SELECT * FROM payments WHERE payment_method = 'cash'", description: "Cash transactions" },
+            { id: 90, title: "Online Payments", category: "payments", sql: "SELECT * FROM payments WHERE payment_method IN ('paypal', 'stripe', 'online')", description: "Digital payment transactions" },
+            { id: 91, title: "Daily Revenue Report", category: "payments", sql: "SELECT DATE(payment_date) as date, SUM(amount) as revenue, COUNT(*) as transactions FROM payments WHERE status = 'completed' GROUP BY date ORDER BY date DESC LIMIT 30", description: "Last 30 days revenue" },
+            { id: 92, title: "Large Transactions", category: "payments", sql: "SELECT * FROM payments WHERE amount > 1000 ORDER BY amount DESC", description: "Transactions over $1000" },
+            { id: 93, title: "Average Transaction Value", category: "payments", sql: "SELECT AVG(amount) as average_payment, COUNT(*) as total_payments FROM payments WHERE status = 'completed'", description: "Average payment amount" },
+            { id: 94, title: "Payments by Hour", category: "payments", sql: "SELECT HOUR(payment_date) as hour, COUNT(*) as transactions FROM payments GROUP BY hour ORDER BY hour", description: "Transaction time distribution" },
+            { id: 95, title: "Failed Transactions", category: "payments", sql: "SELECT * FROM payments WHERE status = 'failed'", description: "Failed payment attempts" },
+            { id: 96, title: "Payment Disputes", category: "payments", sql: "SELECT * FROM payments WHERE disputed = 1", description: "Disputed transactions" },
+            { id: 97, title: "Tax Collected", category: "payments", sql: "SELECT SUM(tax_amount) as total_tax, MONTH(payment_date) as month FROM payments WHERE status = 'completed' GROUP BY month", description: "Monthly tax collection" },
+            { id: 98, title: "Revenue by Room Type", category: "payments", sql: "SELECT r.room_type, SUM(p.amount) as revenue FROM payments p JOIN bookings b ON p.booking_id = b.booking_id JOIN rooms r ON b.room_id = r.room_id GROUP BY r.room_type ORDER BY revenue DESC", description: "Revenue breakdown by room" },
+            { id: 99, title: "Top Paying Customers", category: "payments", sql: "SELECT c.name, SUM(p.amount) as total_paid FROM customers c JOIN bookings b ON c.customer_id = b.customer_id JOIN payments p ON b.booking_id = p.booking_id WHERE p.status = 'completed' GROUP BY c.customer_id ORDER BY total_paid DESC LIMIT 10", description: "Highest paying customers" },
+            { id: 100, title: "Revenue vs Target", category: "analytics", sql: "SELECT DATE_FORMAT(payment_date, '%Y-%m') as month, SUM(amount) as actual_revenue, 50000 as target, ROUND((SUM(amount)/50000)*100, 2) as achievement_percent FROM payments WHERE status = 'completed' GROUP BY month ORDER BY month DESC", description: "Revenue performance vs goals" }
+        ];
+
+        
+
+        const firstNames = ['James', 'Emma', 'Liam', 'Olivia', 'Noah', 'Ava', 'William', 'Sophia', 'Benjamin', 'Isabella', 'Lucas', 'Mia', 'Henry', 'Charlotte', 'Alexander', 'Amelia', 'Daniel', 'Harper', 'Michael', 'Evelyn'];
+        const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson', 'Thomas', 'Taylor', 'Moore', 'Jackson', 'Martin'];
+        const cities = ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Philadelphia', 'San Antonio', 'San Diego', 'Dallas', 'San Jose', 'London', 'Paris', 'Tokyo', 'Sydney', 'Toronto'];
+        const countries = ['USA', 'UK', 'Canada', 'Australia', 'Germany', 'France', 'Japan', 'Spain', 'Italy', 'Netherlands'];
+        const roomTypes = ['Standard', 'Deluxe', 'Suite', 'Executive', 'Presidential'];
+        const departments = ['Front Desk', 'Housekeeping', 'Kitchen', 'Maintenance', 'Security', 'Management', 'Spa', 'Restaurant'];
+        const paymentMethods = ['credit_card', 'debit_card', 'cash', 'paypal', 'bank_transfer'];
+        const bookingSources = ['Website', 'Phone', 'Walk-in', 'Booking.com', 'Expedia', 'Airbnb', 'Travel Agent'];
+
+        function randomName() {
+            return `${firstNames[Math.floor(Math.random() * firstNames.length)]} ${lastNames[Math.floor(Math.random() * lastNames.length)]}`;
+        }
+
+        function randomDate(daysBack = 365) {
+            const date = new Date();
+            date.setDate(date.getDate() - Math.floor(Math.random() * daysBack));
+            return date.toISOString().split('T')[0];
+        }
+
+        function randomAmount(min, max) {
+            return (Math.random() * (max - min) + min).toFixed(2);
+        }
+
+        function randomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function randomElement(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        function generateCustomers(count) {
+            return Array.from({ length: count }, (_, i) => ({
+                customer_id: i + 1,
+                name: randomName(),
+                email: `customer${i + 1}@email.com`,
+                phone: `+1-${randomInt(200, 999)}-${randomInt(100, 999)}-${randomInt(1000, 9999)}`,
+                city: randomElement(cities),
+                country: randomElement(countries),
+                membership_level: randomElement(['Standard', 'Gold', 'Platinum', 'VIP']),
+                total_spent: randomAmount(500, 25000),
+                loyalty_points: randomInt(100, 10000),
+                status: randomElement(['active', 'active', 'active', 'inactive']),
+                created_at: randomDate(730)
+            }));
+        }
+
+        function generateRooms(count) {
+            return Array.from({ length: count }, (_, i) => ({
+                room_id: i + 1,
+                room_number: `${Math.floor(i / 10) + 1}${String(i % 10 + 1).padStart(2, '0')}`,
+                room_type: randomElement(roomTypes),
+                floor: Math.floor(i / 10) + 1,
+                price_per_night: randomAmount(89, 599),
+                max_occupancy: randomInt(2, 6),
+                status: randomElement(['available', 'available', 'occupied', 'maintenance']),
+                amenities: randomElement(['WiFi, TV, AC', 'WiFi, TV, AC, Sea View', 'WiFi, TV, AC, Balcony, Mini Bar', 'WiFi, TV, AC, Jacuzzi, Sea View']),
+                smoking_allowed: Math.random() > 0.8 ? 1 : 0,
+                needs_cleaning: Math.random() > 0.7 ? 1 : 0
+            }));
+        }
+
+        function generateBookings(count) {
+            return Array.from({ length: count }, (_, i) => {
+                const checkIn = randomDate(90);
+                const nights = randomInt(1, 7);
+                const checkOut = new Date(checkIn);
+                checkOut.setDate(checkOut.getDate() + nights);
+                return {
+                    booking_id: i + 1,
+                    customer_id: randomInt(1, 50),
+                    room_id: randomInt(1, 30),
+                    check_in_date: checkIn,
+                    check_out_date: checkOut.toISOString().split('T')[0],
+                    num_guests: randomInt(1, 4),
+                    total_amount: randomAmount(200, 3000),
+                    status: randomElement(['confirmed', 'confirmed', 'confirmed', 'pending', 'completed', 'cancelled']),
+                    booking_source: randomElement(bookingSources),
+                    booking_date: randomDate(100),
+                    special_requests: Math.random() > 0.7 ? randomElement(['Late check-out', 'Extra pillows', 'High floor', 'Quiet room', 'Near elevator']) : null
+                };
+            });
+        }
+
+        function generateStaff(count) {
+            const positions = {
+                'Front Desk': ['Receptionist', 'Front Desk Manager', 'Night Auditor', 'Concierge'],
+                'Housekeeping': ['Housekeeper', 'Housekeeping Supervisor', 'Laundry Attendant'],
+                'Kitchen': ['Chef', 'Sous Chef', 'Line Cook', 'Kitchen Helper'],
+                'Maintenance': ['Maintenance Technician', 'Electrician', 'Plumber'],
+                'Security': ['Security Officer', 'Security Supervisor'],
+                'Management': ['General Manager', 'Assistant Manager', 'Operations Manager'],
+                'Spa': ['Spa Therapist', 'Spa Manager'],
+                'Restaurant': ['Waiter', 'Restaurant Manager', 'Bartender']
+            };
+            return Array.from({ length: count }, (_, i) => {
+                const dept = randomElement(departments);
+                return {
+                    staff_id: i + 1,
+                    name: randomName(),
+                    department: dept,
+                    position: randomElement(positions[dept] || ['Staff']),
+                    phone: `+1-${randomInt(200, 999)}-${randomInt(100, 999)}-${randomInt(1000, 9999)}`,
+                    email: `staff${i + 1}@hotel.com`,
+                    salary: randomAmount(25000, 85000),
+                    hire_date: randomDate(1825),
+                    shift: randomElement(['morning', 'afternoon', 'night']),
+                    performance_rating: randomAmount(3.0, 5.0),
+                    annual_leave_remaining: randomInt(5, 20),
+                    sick_leave_remaining: randomInt(3, 10)
+                };
+            });
+        }
+
+        function generatePayments(count) {
+            return Array.from({ length: count }, (_, i) => ({
+                payment_id: i + 1,
+                booking_id: randomInt(1, 100),
+                amount: randomAmount(100, 3000),
+                payment_method: randomElement(paymentMethods),
+                payment_date: randomDate(180),
+                status: randomElement(['completed', 'completed', 'completed', 'completed', 'pending', 'refunded', 'failed']),
+                tax_amount: randomAmount(10, 200),
+                disputed: Math.random() > 0.95 ? 1 : 0,
+                transaction_id: `TXN${Date.now()}${i}`
+            }));
+        }
+
+        // Generate mock datasets
+        const mockData = {
+            customers: generateCustomers(50),
+            rooms: generateRooms(30),
+            bookings: generateBookings(100),
+            staff: generateStaff(40),
+            payments: generatePayments(150)
+        };
+
+        
+
+        function executeQuery(queryId) {
+            // Simulate API delay
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    let result = [];
+                    
+                    // Customer queries (1-20)
+                    if (queryId >= 1 && queryId <= 20) {
+                        switch(queryId) {
+                            case 1: result = mockData.customers; break;
+                            case 2: result = mockData.customers.filter(c => c.status === 'active'); break;
+                            case 3: result = mockData.customers.filter(c => c.membership_level === 'VIP'); break;
+                            case 4: 
+                                const cityCount = {};
+                                mockData.customers.forEach(c => { cityCount[c.city] = (cityCount[c.city] || 0) + 1; });
+                                result = Object.entries(cityCount).map(([city, count]) => ({ city, count })).sort((a, b) => b.count - a.count);
+                                break;
+                            case 5: result = [...mockData.customers].sort((a, b) => parseFloat(b.total_spent) - parseFloat(a.total_spent)).slice(0, 10); break;
+                            case 6: result = mockData.customers.filter(c => new Date(c.created_at) > new Date(Date.now() - 30*24*60*60*1000)); break;
+                            case 7: result = mockData.customers.filter(c => c.email).map(c => ({ customer_id: c.customer_id, name: c.name, email: c.email })); break;
+                            case 8: 
+                                const countryCount = {};
+                                mockData.customers.forEach(c => { countryCount[c.country] = (countryCount[c.country] || 0) + 1; });
+                                result = Object.entries(countryCount).map(([country, total]) => ({ country, total }));
+                                break;
+                            case 9: result = mockData.customers.slice(0, 15); break; // Simulated repeat customers
+                            case 10: result = mockData.customers.slice(0, 5); break; // Birthday this month
+                            case 11: result = mockData.customers.filter(c => c.status === 'inactive'); break;
+                            case 12: result = mockData.customers.filter(c => c.phone).map(c => ({ name: c.name, phone: c.phone })); break;
+                            case 13: result = [{ age_group: '18-24', count: 8 }, { age_group: '25-34', count: 15 }, { age_group: '35-49', count: 18 }, { age_group: '50+', count: 9 }]; break;
+                            case 14: result = mockData.customers.slice(0, 8); break;
+                            case 15: result = mockData.customers.slice(40, 45); break;
+                            case 16: result = mockData.customers.map(c => ({ name: c.name, loyalty_points: c.loyalty_points })).sort((a, b) => b.loyalty_points - a.loyalty_points); break;
+                            case 17: result = [{ date: '2024-01-15', registrations: 3 }, { date: '2024-01-14', registrations: 5 }, { date: '2024-01-13', registrations: 2 }]; break;
+                            case 18: result = mockData.customers.filter(c => parseFloat(c.total_spent) > 10000); break;
+                            case 19: result = mockData.customers.slice(0, 10); break;
+                            case 20: result = mockData.customers.slice(0, 10).map(c => ({ ...c, total_bookings: randomInt(1, 5), total_paid: c.total_spent })); break;
+                        }
+                    }
+                    // Room queries (21-40)
+                    else if (queryId >= 21 && queryId <= 40) {
+                        switch(queryId) {
+                            case 21: result = mockData.rooms; break;
+                            case 22: result = mockData.rooms.filter(r => r.status === 'available'); break;
+                            case 23: result = mockData.rooms.filter(r => r.status === 'occupied'); break;
+                            case 24: result = mockData.rooms.filter(r => r.status === 'maintenance'); break;
+                            case 25:
+                                const typeStats = {};
+                                mockData.rooms.forEach(r => {
+                                    if (!typeStats[r.room_type]) typeStats[r.room_type] = { count: 0, total_price: 0 };
+                                    typeStats[r.room_type].count++;
+                                    typeStats[r.room_type].total_price += parseFloat(r.price_per_night);
+                                });
+                                result = Object.entries(typeStats).map(([room_type, stats]) => ({ room_type, count: stats.count, avg_price: (stats.total_price / stats.count).toFixed(2) }));
+                                break;
+                            case 26: result = mockData.rooms.filter(r => r.room_type === 'Deluxe'); break;
+                            case 27: result = mockData.rooms.filter(r => r.room_type === 'Suite'); break;
+                            case 28:
+                                const floorStats = {};
+                                mockData.rooms.forEach(r => {
+                                    if (!floorStats[r.floor]) floorStats[r.floor] = { rooms: 0, available: 0 };
+                                    floorStats[r.floor].rooms++;
+                                    if (r.status === 'available') floorStats[r.floor].available++;
+                                });
+                                result = Object.entries(floorStats).map(([floor, stats]) => ({ floor, ...stats }));
+                                break;
+                            case 29: result = [...mockData.rooms].sort((a, b) => parseFloat(b.price_per_night) - parseFloat(a.price_per_night)).slice(0, 10); break;
+                            case 30: result = mockData.rooms.filter(r => parseFloat(r.price_per_night) < 150); break;
+                            case 31: result = mockData.rooms.filter(r => r.amenities.includes('Sea View')); break;
+                            case 32: result = mockData.rooms.filter(r => r.amenities.includes('Balcony')); break;
+                            case 33: result = mockData.rooms.filter(r => r.smoking_allowed === 1); break;
+                            case 34: result = mockData.rooms.filter(r => r.smoking_allowed === 0); break;
+                            case 35: result = roomTypes.map(rt => ({ room_type: rt, max_guests: randomInt(2, 6) })); break;
+                            case 36:
+                                result = roomTypes.map(rt => {
+                                    const rooms = mockData.rooms.filter(r => r.room_type === rt);
+                                    const prices = rooms.map(r => parseFloat(r.price_per_night));
+                                    return { room_type: rt, avg_price: (prices.reduce((a, b) => a + b, 0) / prices.length || 0).toFixed(2), min_price: Math.min(...prices).toFixed(2), max_price: Math.max(...prices).toFixed(2) };
+                                });
+                                break;
+                            case 37: result = mockData.rooms.filter(r => r.needs_cleaning === 1); break;
+                            case 38: result = mockData.rooms.slice(0, 5); break;
+                            case 39: result = mockData.rooms.map(r => ({ room_number: r.room_number, room_type: r.room_type, amenities: r.amenities })); break;
+                            case 40:
+                                result = roomTypes.map(rt => {
+                                    const rooms = mockData.rooms.filter(r => r.room_type === rt);
+                                    const occupied = rooms.filter(r => r.status === 'occupied').length;
+                                    return { room_type: rt, total: rooms.length, occupied, occupancy_rate: ((occupied / rooms.length) * 100).toFixed(2) };
+                                });
+                                break;
+                        }
+                    }
+                    // Booking queries (41-60)
+                    else if (queryId >= 41 && queryId <= 60) {
+                        switch(queryId) {
+                            case 41: result = mockData.bookings; break;
+                            case 42: result = mockData.bookings.slice(0, 5).map(b => ({ ...b, customer_name: randomName(), room_number: `${randomInt(1, 5)}0${randomInt(1, 9)}` })); break;
+                            case 43: result = mockData.bookings.slice(5, 10).map(b => ({ ...b, customer_name: randomName(), room_number: `${randomInt(1, 5)}0${randomInt(1, 9)}` })); break;
+                            case 44: result = mockData.bookings.filter(b => new Date(b.check_in_date) > new Date()); break;
+                            case 45: result = mockData.bookings.filter(b => b.status === 'confirmed'); break;
+                            case 46: result = mockData.bookings.filter(b => b.status === 'pending'); break;
+                            case 47: result = mockData.bookings.filter(b => b.status === 'cancelled'); break;
+                            case 48: result = mockData.bookings.slice(0, 30); break;
+                            case 49:
+                                const sourceCount = {};
+                                mockData.bookings.forEach(b => { sourceCount[b.booking_source] = (sourceCount[b.booking_source] || 0) + 1; });
+                                result = Object.entries(sourceCount).map(([booking_source, count]) => ({ booking_source, count })).sort((a, b) => b.count - a.count);
+                                break;
+                            case 50: result = mockData.bookings.slice(0, 8).map(b => ({ ...b, nights: randomInt(8, 21) })); break;
+                            case 51: result = mockData.bookings.slice(0, 12); break;
+                            case 52: result = [{ month: '2024-01', bookings: 45, revenue: 67500 }, { month: '2023-12', bookings: 52, revenue: 78000 }, { month: '2023-11', bookings: 38, revenue: 57000 }]; break;
+                            case 53: result = [{ avg_nights: 3.7 }]; break;
+                            case 54: result = mockData.bookings.filter(b => b.special_requests); break;
+                            case 55: result = roomTypes.map(rt => ({ room_type: rt, bookings: randomInt(10, 50) })).sort((a, b) => b.bookings - a.bookings); break;
+                            case 56: result = mockData.bookings.slice(0, 15); break;
+                            case 57: result = mockData.bookings.slice(0, 8); break;
+                            case 58: result = mockData.bookings.slice(0, 6); break;
+                            case 59: result = mockData.bookings.filter(b => b.num_guests > 4); break;
+                            case 60: result = [{ status: 'confirmed', count: 45, percentage: 45 }, { status: 'completed', count: 35, percentage: 35 }, { status: 'pending', count: 12, percentage: 12 }, { status: 'cancelled', count: 8, percentage: 8 }]; break;
+                        }
+                    }
+                    // Staff queries (61-80)
+                    else if (queryId >= 61 && queryId <= 80) {
+                        switch(queryId) {
+                            case 61: result = mockData.staff; break;
+                            case 62:
+                                const deptCount = {};
+                                mockData.staff.forEach(s => { deptCount[s.department] = (deptCount[s.department] || 0) + 1; });
+                                result = Object.entries(deptCount).map(([department, employees]) => ({ department, employees })).sort((a, b) => b.employees - a.employees);
+                                break;
+                            case 63: result = mockData.staff.filter(s => s.department === 'Front Desk'); break;
+                            case 64: result = mockData.staff.filter(s => s.department === 'Housekeeping'); break;
+                            case 65: result = mockData.staff.filter(s => s.department === 'Kitchen'); break;
+                            case 66: result = mockData.staff.filter(s => s.position.includes('Manager')); break;
+                            case 67:
+                                result = departments.map(dept => {
+                                    const deptStaff = mockData.staff.filter(s => s.department === dept);
+                                    const salaries = deptStaff.map(s => parseFloat(s.salary));
+                                    return { department: dept, avg_salary: (salaries.reduce((a, b) => a + b, 0) / salaries.length || 0).toFixed(2), min_salary: Math.min(...salaries).toFixed(2), max_salary: Math.max(...salaries).toFixed(2) };
+                                });
+                                break;
+                            case 68: result = [...mockData.staff].sort((a, b) => parseFloat(b.salary) - parseFloat(a.salary)).slice(0, 10); break;
+                            case 69: result = mockData.staff.slice(0, 15); break;
+                            case 70: result = mockData.staff.filter(s => s.shift === 'night'); break;
+                            case 71: result = mockData.staff.filter(s => new Date(s.hire_date) > new Date(Date.now() - 90*24*60*60*1000)); break;
+                            case 72: result = mockData.staff.slice(0, 8).map(s => ({ ...s, overtime_hours: randomInt(5, 25) })); break;
+                            case 73: result = mockData.staff.map(s => ({ name: s.name, department: s.department, phone: s.phone, email: s.email })); break;
+                            case 74: result = [...mockData.staff].sort((a, b) => parseFloat(b.performance_rating) - parseFloat(a.performance_rating)); break;
+                            case 75: result = mockData.staff.map(s => ({ ...s, years_employed: ((Date.now() - new Date(s.hire_date)) / (365*24*60*60*1000)).toFixed(1) })).sort((a, b) => parseFloat(b.years_employed) - parseFloat(a.years_employed)); break;
+                            case 76: result = mockData.staff.slice(0, 10).map(s => ({ name: s.name, department: s.department, training_name: randomElement(['Safety Training', 'Customer Service', 'First Aid', 'Fire Safety']), completion_date: randomDate(180) })); break;
+                            case 77: result = mockData.staff.map(s => ({ name: s.name, department: s.department, annual_leave_remaining: s.annual_leave_remaining, sick_leave_remaining: s.sick_leave_remaining })); break;
+                            case 78: result = mockData.staff.filter(s => s.department === 'Security'); break;
+                            case 79: result = mockData.staff.filter(s => s.department === 'Maintenance'); break;
+                            case 80: result = mockData.staff.slice(0, 4).map(s => ({ name: s.name, department: s.department, date_of_birth: randomDate(365) })); break;
+                        }
+                    }
+                    // Payment queries (81-100)
+                    else if (queryId >= 81 && queryId <= 100) {
+                        switch(queryId) {
+                            case 81: result = mockData.payments; break;
+                            case 82: result = mockData.payments.filter(p => p.status === 'pending').slice(0, 10).map(p => ({ ...p, customer_name: randomName() })); break;
+                            case 83: result = mockData.payments.filter(p => p.status === 'completed'); break;
+                            case 84: result = mockData.payments.filter(p => p.status === 'refunded'); break;
+                            case 85: 
+                                const completedPayments = mockData.payments.filter(p => p.status === 'completed');
+                                result = [{ total_revenue: completedPayments.reduce((sum, p) => sum + parseFloat(p.amount), 0).toFixed(2), total_transactions: completedPayments.length }];
+                                break;
+                            case 86: result = [{ monthly_revenue: randomAmount(45000, 75000) }]; break;
+                            case 87:
+                                const methodCount = {};
+                                mockData.payments.forEach(p => {
+                                    if (!methodCount[p.payment_method]) methodCount[p.payment_method] = { transactions: 0, total: 0 };
+                                    methodCount[p.payment_method].transactions++;
+                                    methodCount[p.payment_method].total += parseFloat(p.amount);
+                                });
+                                result = Object.entries(methodCount).map(([payment_method, stats]) => ({ payment_method, ...stats, total: stats.total.toFixed(2) })).sort((a, b) => parseFloat(b.total) - parseFloat(a.total));
+                                break;
+                            case 88: result = mockData.payments.filter(p => p.payment_method === 'credit_card'); break;
+                            case 89: result = mockData.payments.filter(p => p.payment_method === 'cash'); break;
+                            case 90: result = mockData.payments.filter(p => ['paypal', 'bank_transfer'].includes(p.payment_method)); break;
+                            case 91: result = [{ date: '2024-01-15', revenue: 5420, transactions: 12 }, { date: '2024-01-14', revenue: 7830, transactions: 18 }, { date: '2024-01-13', revenue: 4560, transactions: 9 }, { date: '2024-01-12', revenue: 6890, transactions: 15 }]; break;
+                            case 92: result = mockData.payments.filter(p => parseFloat(p.amount) > 1000).sort((a, b) => parseFloat(b.amount) - parseFloat(a.amount)); break;
+                            case 93: result = [{ average_payment: (mockData.payments.filter(p => p.status === 'completed').reduce((sum, p) => sum + parseFloat(p.amount), 0) / mockData.payments.filter(p => p.status === 'completed').length).toFixed(2), total_payments: mockData.payments.filter(p => p.status === 'completed').length }]; break;
+                            case 94: result = Array.from({ length: 24 }, (_, h) => ({ hour: h, transactions: randomInt(2, 15) })); break;
+                            case 95: result = mockData.payments.filter(p => p.status === 'failed'); break;
+                            case 96: result = mockData.payments.filter(p => p.disputed === 1); break;
+                            case 97: result = [{ month: 1, total_tax: randomAmount(5000, 12000) }, { month: 2, total_tax: randomAmount(5000, 12000) }]; break;
+                            case 98: result = roomTypes.map(rt => ({ room_type: rt, revenue: randomAmount(10000, 50000) })).sort((a, b) => parseFloat(b.revenue) - parseFloat(a.revenue)); break;
+                            case 99: result = Array.from({ length: 10 }, (_, i) => ({ name: randomName(), total_paid: randomAmount(5000, 25000) })).sort((a, b) => parseFloat(b.total_paid) - parseFloat(a.total_paid)); break;
+                            case 100: result = [{ month: '2024-01', actual_revenue: 52340, target: 50000, achievement_percent: 104.68 }, { month: '2023-12', actual_revenue: 48750, target: 50000, achievement_percent: 97.50 }]; break;
+                        }
+                    }
+
+                    resolve(result);
+                }, randomInt(200, 600)); // Simulate network delay
+            });
+        }
+
+        let activeQueryId = null;
+        let filteredQueries = [...queries];
+
+        function renderSidebar() {
+            const nav = document.getElementById('sidebar-nav');
+            nav.innerHTML = '';
+
+            filteredQueries.forEach((query, index) => {
+                const btn = document.createElement('button');
+                btn.className = `query-btn w-full text-left px-3 py-2 rounded-lg text-sm ${
+                    activeQueryId === query.id ? 'active bg-blue-600' : 'bg-slate-700 hover:bg-slate-600'
+                } transition-all`;
+                btn.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="w-6 h-6 flex items-center justify-center bg-slate-600 rounded text-xs font-mono">${query.id}</span>
+                        <span class="truncate">${query.title}</span>
+                    </div>
+                `;
+                btn.onclick = () => runQuery(query.id);
+                btn.style.animationDelay = `${index * 10}ms`;
+                nav.appendChild(btn);
+            });
+        }
+
+        function filterQueries() {
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            const category = document.getElementById('category-filter').value;
+
+            filteredQueries = queries.filter(q => {
+                const matchesSearch = q.title.toLowerCase().includes(searchTerm) || 
+                                      q.description.toLowerCase().includes(searchTerm) ||
+                                      q.id.toString().includes(searchTerm);
+                const matchesCategory = category === 'all' || q.category === category;
+                return matchesSearch && matchesCategory;
+            });
+
+            renderSidebar();
+        }
+
+        function showState(state) {
+            ['welcome-state', 'loading-state', 'no-data-state', 'results-table-container'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(state).classList.remove('hidden');
+        }
+
+        function renderTable(data) {
+            if (!data || data.length === 0) {
+                showState('no-data-state');
+                return;
+            }
+
+            const thead = document.getElementById('table-head');
+            const tbody = document.getElementById('table-body');
+
+            // Generate headers
+            const headers = Object.keys(data[0]);
+            thead.innerHTML = `<tr>${headers.map(h => `
+                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">${h.replace(/_/g, ' ')}</th>
+            `).join('')}</tr>`;
+
+            // Generate rows
+            tbody.innerHTML = data.map((row, i) => `
+                <tr class="table-row hover:bg-slate-750 transition-colors" style="animation-delay: ${i * 30}ms">
+                    ${headers.map(h => {
+                        let value = row[h];
+                        let cellClass = 'text-slate-300';
+                        
+                        // Style certain values
+                        if (h.includes('status')) {
+                            const statusColors = {
+                                'active': 'bg-green-500/20 text-green-400',
+                                'completed': 'bg-green-500/20 text-green-400',
+                                'confirmed': 'bg-blue-500/20 text-blue-400',
+                                'available': 'bg-green-500/20 text-green-400',
+                                'occupied': 'bg-yellow-500/20 text-yellow-400',
+                                'pending': 'bg-yellow-500/20 text-yellow-400',
+                                'cancelled': 'bg-red-500/20 text-red-400',
+                                'failed': 'bg-red-500/20 text-red-400',
+                                'refunded': 'bg-purple-500/20 text-purple-400',
+                                'maintenance': 'bg-orange-500/20 text-orange-400',
+                                'inactive': 'bg-slate-500/20 text-slate-400'
+                            };
+                            const color = statusColors[value?.toLowerCase()] || 'bg-slate-500/20 text-slate-400';
+                            return `<td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs font-medium ${color}">${value}</span></td>`;
+                        }
+                        
+                        if (h.includes('amount') || h.includes('price') || h.includes('salary') || h.includes('revenue') || h.includes('spent') || h.includes('paid') || h.includes('total') && !h.includes('count')) {
+                            if (typeof value === 'number' || (typeof value === 'string' && !isNaN(parseFloat(value)))) {
+                                return `<td class="px-4 py-3 text-emerald-400 font-mono">$${parseFloat(value).toLocaleString()}</td>`;
+                            }
+                        }
+                        
+                        if (h.includes('date')) {
+                            cellClass = 'text-blue-400';
+                        }
+                        
+                        if (h.includes('email')) {
+                            cellClass = 'text-cyan-400';
+                        }
+                        
+                        if (h.includes('phone')) {
+                            cellClass = 'text-slate-400 font-mono text-xs';
+                        }
+                        
+                        return `<td class="px-4 py-3 ${cellClass}">${value ?? '-'}</td>`;
+                    }).join('')}
+                </tr>
+            `).join('');
+
+            showState('results-table-container');
+        }
+
+        async function runQuery(queryId) {
+            const query = queries.find(q => q.id === queryId);
+            if (!query) return;
+
+            activeQueryId = queryId;
+            renderSidebar();
+
+            // Update query info
+            document.getElementById('query-title').textContent = `Query ${query.id}: ${query.title}`;
+            document.getElementById('query-description').textContent = query.description;
+            
+            // Show SQL
+            document.getElementById('sql-display').classList.remove('hidden');
+            document.getElementById('sql-code').textContent = query.sql;
+
+            // Show loading
+            showState('loading-state');
+            document.getElementById('row-count').classList.add('hidden');
+            document.getElementById('query-time').classList.add('hidden');
+
+            // Execute query (simulate API call)
+            const startTime = Date.now();
+            
+            // In production, this would be:
+            // const response = await fetch(`/api/query/${queryId}`);
+            // const data = await response.json();
+            
+            const data = await executeQuery(queryId);
+            const endTime = Date.now();
+
+            // Update meta info
+            document.getElementById('count-value').textContent = data.length;
+            document.getElementById('time-value').textContent = endTime - startTime;
+            document.getElementById('row-count').classList.remove('hidden');
+            document.getElementById('query-time').classList.remove('hidden');
+
+            // Render results
+            renderTable(data);
+        }
+
+        // Copy SQL functionality
+        document.getElementById('copy-sql').addEventListener('click', () => {
+            const sql = document.getElementById('sql-code').textContent;
+            navigator.clipboard.writeText(sql).then(() => {
+                const btn = document.getElementById('copy-sql');
+                btn.innerHTML = `<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Copied!`;
+                setTimeout(() => {
+                    btn.innerHTML = `<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg> Copy`;
+                }, 2000);
+            });
+        });
+
+        // Search and filter event listeners
+        document.getElementById('search-input').addEventListener('input', filterQueries);
+        document.getElementById('category-filter').addEventListener('change', filterQueries);
+
+        
+        async function onConfigChange(cfg) {
+            const systemTitle = cfg.system_title || defaultConfig.system_title;
+            const hotelName = cfg.hotel_name || defaultConfig.hotel_name;
+            
+            document.getElementById('system-title').textContent = systemTitle;
+            document.getElementById('hotel-name').textContent = hotelName;
+        }
+
+        if (window.elementSdk) {
+            window.elementSdk.init({
+                defaultConfig,
+                onConfigChange,
+                mapToCapabilities: (cfg) => ({
+                    recolorables: [],
+                    borderables: [],
+                    fontEditable: undefined,
+                    fontSizeable: undefined
+                }),
+                mapToEditPanelValues: (cfg) => new Map([
+                    ['system_title', cfg.system_title || defaultConfig.system_title],
+                    ['hotel_name', cfg.hotel_name || defaultConfig.hotel_name]
+                ])
+            });
+        }
+
+      
+        renderSidebar();
+    </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ddb64d19508b2a9',t:'MTc3Mzc0NDE3Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
